@@ -21,7 +21,6 @@ export function WaitlistForm({ referredByCode }: { referredByCode?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [igCopied, setIgCopied] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,23 +69,6 @@ export function WaitlistForm({ referredByCode }: { referredByCode?: string }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  // Instagram has no share-intent URL with prefilled text, so the best web
-  // flow is: copy the caption + link, then open Instagram for them to paste.
-  async function shareInstagram() {
-    if (!result) return;
-    const url = `https://trypack.app/r/${result.referral_code}`;
-    const caption = `I'm on the Pack waitlist — walks with your dog that earn real rewards. Spots in the top 200 get a free custom tote. Join with my link: ${url}`;
-    try {
-      await navigator.clipboard.writeText(caption);
-    } catch {
-      // Clipboard can fail outside secure contexts — still open Instagram.
-    }
-    track('referral_share', { channel: 'instagram' });
-    setIgCopied(true);
-    setTimeout(() => setIgCopied(false), 4000);
-    window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
-  }
-
   if (stage === 'success' && result) {
     const url = `https://trypack.app/r/${result.referral_code}`;
     const shareMessage = `Join me on Pack — we both earn credits when you sign up. ${url}`;
@@ -131,41 +113,13 @@ export function WaitlistForm({ referredByCode }: { referredByCode?: string }) {
             WhatsApp
           </a>
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareMessage)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => track('referral_share', { channel: 'x' })}
-            className="bg-tangerine text-white text-sm font-medium px-3 py-1 rounded-md hover:opacity-90"
-          >
-            X
-          </a>
-          <a
             href={`sms:?&body=${encodeURIComponent(shareMessage)}`}
             onClick={() => track('referral_share', { channel: 'sms' })}
             className="bg-tangerine text-white text-sm font-medium px-3 py-1 rounded-md hover:opacity-90"
           >
             Messages
           </a>
-          <a
-            href={`mailto:?subject=${encodeURIComponent('Join me on Pack')}&body=${encodeURIComponent(shareMessage)}`}
-            onClick={() => track('referral_share', { channel: 'email' })}
-            className="bg-tangerine text-white text-sm font-medium px-3 py-1 rounded-md hover:opacity-90"
-          >
-            Email
-          </a>
-          <button
-            type="button"
-            onClick={shareInstagram}
-            className="bg-tangerine text-white text-sm font-medium px-3 py-1 rounded-md hover:opacity-90"
-          >
-            Instagram
-          </button>
         </div>
-        {igCopied ? (
-          <p className="text-xs text-cocoa mt-2">
-            Caption copied — paste it into your story, bio, or DMs.
-          </p>
-        ) : null}
       </div>
     );
   }
