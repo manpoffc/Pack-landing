@@ -13,7 +13,7 @@ const MOSS = '#3f6b4a';
 export function Header() {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-parchment/80 border-b border-sand/60">
-      <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Link
           href="/"
           aria-label="Pack — home"

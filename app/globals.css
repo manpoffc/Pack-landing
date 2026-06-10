@@ -4,6 +4,6 @@
 
 @layer base {
   body {
-    @apply bg-parchment text-espresso font-sans antialiased;
+    @apply bg-parchment text-espresso font-sans antialiased overflow-x-hidden;
   }
 }

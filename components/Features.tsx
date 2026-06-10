@@ -46,10 +46,10 @@ export function Features() {
   return (
     <section className="bg-cream">
       <motion.div
-        className="max-w-5xl mx-auto px-6 py-20"
+        className="max-w-5xl mx-auto px-4 sm:px-6 py-14 sm:py-20"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
+        viewport={{ once: true, amount: 0.1 }}
         variants={staggerParent}
       >
         <motion.h2
@@ -58,7 +58,7 @@ export function Features() {
         >
           Built for dog parents who actually walk.
         </motion.h2>
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <motion.div
               key={f.title}

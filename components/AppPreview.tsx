@@ -11,10 +11,10 @@ export function AppPreview() {
   return (
     <section className="bg-cream">
       <motion.div
-        className="max-w-6xl mx-auto px-6 py-20"
+        className="max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-20"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
+        viewport={{ once: true, amount: 0.1 }}
         variants={staggerParent}
       >
         <motion.h2
@@ -31,7 +31,7 @@ export function AppPreview() {
         </motion.p>
 
         <motion.div
-          className="grid gap-12 md:grid-cols-2 lg:grid-cols-4 justify-items-center"
+          className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-items-center"
           variants={staggerParent}
         >
           <motion.div variants={fadeUp} whileHover={tileHover}>

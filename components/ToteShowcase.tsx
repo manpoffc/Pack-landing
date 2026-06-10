@@ -11,10 +11,10 @@ export function ToteShowcase() {
   return (
     <section className="bg-parchment border-y border-sand overflow-hidden">
       <motion.div
-        className="max-w-5xl mx-auto px-6 py-20 grid gap-12 lg:grid-cols-2 items-center"
+        className="max-w-5xl mx-auto px-4 sm:px-6 py-14 sm:py-20 grid gap-12 grid-cols-1 lg:grid-cols-2 items-center"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
+        viewport={{ once: true, amount: 0.1 }}
         variants={staggerParent}
       >
         <motion.div variants={fadeUp}>
@@ -70,7 +70,7 @@ const PALETTE = {
 const NAME_SIZE = 100;
 const NAME_EM_RATIO = 0.55;
 
-function ToteSvg({ dogName, width = 380 }: { dogName: string; width?: number }) {
+function ToteSvg({ dogName, width = 340 }: { dogName: string; width?: number }) {
   const p = PALETTE;
   const VBOX_W = 800;
   const VBOX_H = 1000;
@@ -91,6 +91,7 @@ function ToteSvg({ dogName, width = 380 }: { dogName: string; width?: number }) 
       xmlns="http://www.w3.org/2000/svg"
       width={width}
       height={height}
+      className="max-w-full"
       viewBox={`0 0 ${VBOX_W} ${VBOX_H}`}
       role="img"
       aria-label={`Pack Founding Member tote, printed with the name ${dogName}`}

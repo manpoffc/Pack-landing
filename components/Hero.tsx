@@ -17,7 +17,7 @@ export function Hero({
     <section className="relative overflow-hidden">
       <PawTrail />
       <motion.div
-        className="relative max-w-5xl mx-auto px-6 pt-20 pb-16 text-center"
+        className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-12 sm:pb-16 text-center"
         style={{ zIndex: 1 }}
         initial="hidden"
         animate="visible"
@@ -33,14 +33,14 @@ export function Hero({
         </motion.p>
 
         <motion.h1
-          className="font-display text-5xl sm:text-6xl md:text-7xl font-bold leading-tight tracking-tight"
+          className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight"
           variants={heroUp}
         >
           Walks worth showing up for.
         </motion.h1>
 
         <motion.p
-          className="mt-6 text-lg sm:text-xl text-cocoa max-w-2xl mx-auto"
+          className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-cocoa max-w-2xl mx-auto"
           variants={fadeUp}
         >
           Pack is the social walking app for dog parents. Meet nearby walkers,

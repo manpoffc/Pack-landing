@@ -26,11 +26,11 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="max-w-5xl mx-auto px-6 py-20">
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
       <motion.div
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
+        viewport={{ once: true, amount: 0.1 }}
         variants={staggerParent}
       >
         <motion.h2
@@ -46,7 +46,7 @@ export function HowItWorks() {
           We're letting people in gradually. Sharing your code moves you up — being early on the list
           and bringing friends is how you win the tote.
         </motion.p>
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 grid-cols-1 md:grid-cols-3">
           {STEPS.map((s) => (
             <motion.div key={s.n} variants={fadeUp}>
               <motion.div
