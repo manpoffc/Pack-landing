@@ -21,6 +21,7 @@ export function WaitlistForm({ referredByCode }: { referredByCode?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [igCopied, setIgCopied] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,21 +70,38 @@ export function WaitlistForm({ referredByCode }: { referredByCode?: string }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  // Instagram has no share-intent URL with prefilled text, so the best web
+  // flow is: copy the caption + link, then open Instagram for them to paste.
+  async function shareInstagram() {
+    if (!result) return;
+    const url = `https://trypack.app/r/${result.referral_code}`;
+    const caption = `I'm on the Pack waitlist — walks with your dog that earn real rewards. Spots in the top 200 get a free custom tote. Join with my link: ${url}`;
+    try {
+      await navigator.clipboard.writeText(caption);
+    } catch {
+      // Clipboard can fail outside secure contexts — still open Instagram.
+    }
+    track('referral_share', { channel: 'instagram' });
+    setIgCopied(true);
+    setTimeout(() => setIgCopied(false), 4000);
+    window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+  }
+
   if (stage === 'success' && result) {
     const url = `https://trypack.app/r/${result.referral_code}`;
     const shareMessage = `Join me on Pack — we both earn credits when you sign up. ${url}`;
     return (
       <div className="max-w-xl mx-auto bg-parchment border border-sand rounded-2xl p-8 text-left">
         <div className="text-center mb-6">
-          <div className="text-5xl mb-2">{result.rank <= 200 ? '🎁' : '✨'}</div>
+          <div className="text-5xl mb-2">🎁</div>
           <h3 className="font-display text-2xl font-bold">
-            {result.already_signed_up ? "You're already on the list." : "You're in."}
+            {result.already_signed_up ? "You're already on the waitlist." : "You're on the waitlist."}
           </h3>
+          {/* Deliberately no rank/total numbers — scarcity without exposing scale. */}
           <p className="text-cocoa mt-2">
-            You're <b>#{result.rank}</b> of {result.total}.
-            {result.rank <= 200
-              ? ' Finish your first walk in the app and the custom tote is yours.'
-              : ` Refer ${201 - result.rank} more friend${201 - result.rank === 1 ? '' : 's'} to climb into the top 200.`}
+            The first <b>200 walkers</b> get the free custom tote — and the order shifts
+            every day. Every friend who joins with your link moves you up
+            (and bumps someone else down).
           </p>
         </div>
         <p className="text-sm text-cocoa mb-2">Your invite link:</p>
@@ -135,7 +153,19 @@ export function WaitlistForm({ referredByCode }: { referredByCode?: string }) {
           >
             Email
           </a>
+          <button
+            type="button"
+            onClick={shareInstagram}
+            className="bg-tangerine text-white text-sm font-medium px-3 py-1 rounded-md hover:opacity-90"
+          >
+            Instagram
+          </button>
         </div>
+        {igCopied ? (
+          <p className="text-xs text-cocoa mt-2">
+            Caption copied — paste it into your story, bio, or DMs.
+          </p>
+        ) : null}
       </div>
     );
   }
