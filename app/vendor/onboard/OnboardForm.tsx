@@ -9,6 +9,17 @@ type Props = {
   prefillBusinessName: string;
 };
 
+type AddressSuggestion = {
+  label: string;
+  line1: string;
+  city: string;
+  state: string;
+  postal: string;
+  country: string;
+  lat: number;
+  lng: number;
+};
+
 function inputClass(extra?: string) {
   return `w-full border border-sand rounded-lg px-3 py-2 text-espresso bg-parchment focus:outline-none focus:ring-2 focus:ring-tangerine text-sm ${extra ?? ''}`;
 }
@@ -38,6 +49,58 @@ export default function OnboardForm({
   const [state, setState] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [country, setCountry] = useState('US');
+
+  // Address autocomplete (Photon, via /api/geo/autocomplete). Capturing
+  // lat/lng on select means the vendor is geocoded at onboarding.
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  function onLine1Change(value: string) {
+    setLine1(value);
+    // Manual edits invalidate any captured coordinates.
+    setLat(null);
+    setLng(null);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.trim().length < 3) {
+      setSuggestions([]);
+      setShowSuggest(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      // Cancel any in-flight request so a slow earlier response can't
+      // overwrite suggestions for the latest query.
+      abortRef.current?.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      try {
+        const res = await fetch(
+          `/api/geo/autocomplete?q=${encodeURIComponent(value.trim())}`,
+          { signal: ctrl.signal },
+        );
+        const json = (await res.json()) as { suggestions?: AddressSuggestion[] };
+        setSuggestions(json.suggestions ?? []);
+        setShowSuggest((json.suggestions ?? []).length > 0);
+      } catch {
+        // Aborted or network error — leave existing suggestions untouched.
+      }
+    }, 350);
+  }
+
+  function pickSuggestion(s: AddressSuggestion) {
+    setLine1(s.line1);
+    if (s.city) setCity(s.city);
+    if (s.state) setState(s.state);
+    if (s.postal) setPostalCode(s.postal);
+    if (s.country) setCountry(s.country);
+    setLat(s.lat);
+    setLng(s.lng);
+    setSuggestions([]);
+    setShowSuggest(false);
+  }
 
   // URLs
   const [websiteUrl, setWebsiteUrl] = useState('');
@@ -107,6 +170,8 @@ export default function OnboardForm({
           state: state.trim(),
           postal_code: postalCode.trim(),
           country: country.trim(),
+          lat,
+          lng,
           website_url: websiteUrl.trim() || null,
           online_store: onlineStore,
           logo_base64: logoBase64,
@@ -206,19 +271,44 @@ export default function OnboardForm({
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label htmlFor="line1" className={labelClass()}>
               Address line 1 <span className="text-brick">*</span>
             </label>
             <input
               id="line1"
               type="text"
+              autoComplete="off"
               value={line1}
-              onChange={(e) => setLine1(e.target.value)}
+              onChange={(e) => onLine1Change(e.target.value)}
+              onFocus={() => suggestions.length > 0 && setShowSuggest(true)}
+              onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
               required
               className={inputClass()}
-              placeholder="123 Main St"
+              placeholder="Start typing your address…"
             />
+            {showSuggest && suggestions.length > 0 && (
+              <ul className="absolute z-10 mt-1 w-full bg-white border border-sand rounded-lg shadow-md max-h-60 overflow-auto">
+                {suggestions.map((s, i) => (
+                  <li key={`${s.label}-${i}`}>
+                    <button
+                      type="button"
+                      // onMouseDown (not onClick) so it fires before the input's onBlur
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        pickSuggestion(s);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-espresso hover:bg-parchment"
+                    >
+                      {s.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {lat != null && lng != null && (
+              <p className="text-xs text-sage mt-1">✓ Location set — your service area is ready.</p>
+            )}
           </div>
 
           <div>

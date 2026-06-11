@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
     state,
     postal_code,
     country,
+    lat,
+    lng,
     website_url,
     online_store,
     logo_base64,
@@ -54,6 +56,8 @@ export async function POST(req: NextRequest) {
     state?: string;
     postal_code?: string;
     country?: string;
+    lat?: number | null;
+    lng?: number | null;
     website_url?: string | null;
     online_store?: boolean;
     logo_base64?: string | null;
@@ -196,8 +200,8 @@ export async function POST(req: NextRequest) {
     p_state: (state as string | undefined) ?? null,
     p_postal_code: (postal_code as string | undefined) ?? null,
     p_country: (country as string | undefined) ?? null,
-    p_lat: null,
-    p_lng: null,
+    p_lat: typeof lat === 'number' ? lat : null,
+    p_lng: typeof lng === 'number' ? lng : null,
     p_website_url: website_url ?? null,
     p_online_store: online_store ?? false,
     p_logo_url: logoUrl,
