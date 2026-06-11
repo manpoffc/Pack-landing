@@ -14,6 +14,18 @@ async function requireVendor() {
   return result.vendor;
 }
 
+// redirect() works by throwing a NEXT_REDIRECT error; an action's catch must
+// re-throw it (not swallow it into an error string) or the navigation is lost.
+function isRedirectError(e: unknown): boolean {
+  return (
+    typeof e === 'object' &&
+    e !== null &&
+    'digest' in e &&
+    typeof (e as { digest?: unknown }).digest === 'string' &&
+    (e as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+  );
+}
+
 // Upload a base64 data-URL image to the deal-images bucket.
 // Returns the public URL, or null if no image was provided.
 async function uploadDealImage(
@@ -29,6 +41,11 @@ async function uploadDealImage(
 
   const mimeType = match[1];
   const base64Data = match[2];
+
+  // Cap at ~3MB of base64 (~2.2MB decoded) to avoid OOM / bucket bloat.
+  if (base64Data.length > 3_000_000) {
+    throw new Error('Image is too large — please use one under ~2MB.');
+  }
 
   // Derive extension from mime type (fallback to jpg)
   const ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
@@ -91,6 +108,7 @@ export async function createDeal(formData: FormData): Promise<ActionResult> {
     revalidatePath('/vendor/deals');
     return { ok: true };
   } catch (e) {
+    if (isRedirectError(e)) throw e;
     return { ok: false, error: e instanceof Error ? e.message : 'Unexpected error' };
   }
 }
@@ -141,6 +159,7 @@ export async function updateDeal(formData: FormData): Promise<ActionResult> {
     revalidatePath('/vendor/deals');
     return { ok: true };
   } catch (e) {
+    if (isRedirectError(e)) throw e;
     return { ok: false, error: e instanceof Error ? e.message : 'Unexpected error' };
   }
 }
@@ -179,6 +198,7 @@ export async function toggleDeal(formData: FormData): Promise<ActionResult> {
     revalidatePath('/vendor/deals');
     return { ok: true };
   } catch (e) {
+    if (isRedirectError(e)) throw e;
     return { ok: false, error: e instanceof Error ? e.message : 'Unexpected error' };
   }
 }
@@ -215,6 +235,7 @@ export async function addCodes(formData: FormData): Promise<ActionResult> {
     revalidatePath('/vendor/deals');
     return { ok: true, message: `${data ?? codes.length} code(s) added successfully.` };
   } catch (e) {
+    if (isRedirectError(e)) throw e;
     return { ok: false, error: e instanceof Error ? e.message : 'Unexpected error' };
   }
 }
