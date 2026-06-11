@@ -58,44 +58,35 @@ export async function inviteVendor(formData: FormData) {
   const onboardingLink = `${siteUrl}/vendor/onboard?token=${token}`;
 
   try {
+    // Plain, transactional styling on purpose: a single link (no big marketing
+    // button), conversational tone, and a strong text/plain part — this biases
+    // Gmail toward the Primary tab rather than Promotions.
     await sendEmail({
       to: email,
-      subject: "You're invited to sell on Pack",
+      subject: `Set up your Pack vendor account`,
       html: `
-<div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#2c1a0e;">
-  <h2 style="font-size:22px;margin-bottom:8px;">You're invited to sell on Pack!</h2>
-  <p style="margin-bottom:12px;">
-    Hi there — Pack is a community-first platform for dog owners, and we'd love to have
-    <strong>${businessName}</strong> as a vendor.
-  </p>
-  <p style="margin-bottom:20px;">
-    Click the link below to set up your vendor account and start listing products for our
-    dog-loving community.
-  </p>
-  <a href="${onboardingLink}"
-     style="display:inline-block;background:#d44c1a;color:#fff;font-weight:600;
-            padding:12px 24px;border-radius:8px;text-decoration:none;margin-bottom:24px;">
-    Set up your vendor account
-  </a>
-  <p style="font-size:13px;color:#6b4f3a;margin-bottom:8px;">
-    This link expires in 14 days. If you didn't request this invitation, you can safely ignore it.
-  </p>
-  <p style="font-size:12px;color:#9a7a5a;border-top:1px solid #e8dcc8;padding-top:12px;">
-    Note: Pack reserves the right to suspend or cancel vendor memberships at any time
-    in accordance with our vendor terms of service.
+<div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:520px;margin:0 auto;color:#2c1a0e;font-size:15px;line-height:1.5;">
+  <p>Hi ${businessName},</p>
+  <p>You're set up to join Pack as a vendor. Use the link below to finish creating your account — set a password and confirm your business details:</p>
+  <p><a href="${onboardingLink}" style="color:#b5410f;">${onboardingLink}</a></p>
+  <p>The link expires in 14 days. If you weren't expecting this, you can ignore this email.</p>
+  <p style="color:#6b4f3a;">— The Pack team</p>
+  <p style="font-size:12px;color:#9a7a5a;margin-top:24px;">
+    Pack may suspend or cancel vendor memberships at any time per our vendor terms.
   </p>
 </div>
 `,
-      text: `You're invited to sell on Pack!
+      text: `Hi ${businessName},
 
-Hi there — Pack is a community-first platform for dog owners, and we'd love to have ${businessName} as a vendor.
+You're set up to join Pack as a vendor. Use the link below to finish creating your account — set a password and confirm your business details:
 
-Click the link below to set up your vendor account:
 ${onboardingLink}
 
-This link expires in 14 days.
+The link expires in 14 days. If you weren't expecting this, you can ignore this email.
 
-Note: Pack reserves the right to suspend or cancel vendor memberships at any time in accordance with our vendor terms of service.
+— The Pack team
+
+Pack may suspend or cancel vendor memberships at any time per our vendor terms.
 `,
     });
   } catch (emailErr) {
