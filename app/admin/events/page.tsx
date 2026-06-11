@@ -122,6 +122,10 @@ export default async function AdminEventsPage() {
           <a href="/admin/vendors" className="text-cocoa hover:text-espresso underline">
             Vendor Management
           </a>
+          <span className="text-sand">/</span>
+          <a href="/admin/deals" className="text-cocoa hover:text-espresso underline">
+            Deal Moderation
+          </a>
         </nav>
 
         {/* header */}
