@@ -115,6 +115,15 @@ export default async function AdminEventsPage() {
   return (
     <main className="bg-parchment min-h-screen">
       <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* admin nav */}
+        <nav className="flex gap-4 mb-8 text-sm">
+          <span className="text-espresso font-semibold">Event Review</span>
+          <span className="text-sand">/</span>
+          <a href="/admin/vendors" className="text-cocoa hover:text-espresso underline">
+            Vendor Management
+          </a>
+        </nav>
+
         {/* header */}
         <div className="flex items-center justify-between mb-10">
           <div>
