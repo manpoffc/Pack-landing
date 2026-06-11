@@ -1,0 +1,19 @@
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
+// GET /api/admin/logout — clears the pack_admin cookie and redirects to login.
+// Using GET so it works as a plain <a href> without JavaScript.
+export async function GET() {
+  const res = NextResponse.redirect(
+    new URL('/admin/login', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001'),
+  );
+  res.cookies.set('pack_admin', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
+  return res;
+}
