@@ -100,7 +100,14 @@ export async function POST(req: NextRequest) {
   // under another vendor's storage prefix.
   const resolvedVendorId = invite.vendor_id as string;
 
-  // ── Create auth user ──────────────────────────────────────────────────────
+  // ── Create OR link the auth user ──────────────────────────────────────────
+  // Vendors share auth.users with app (dog-parent) accounts, so the invited
+  // email may already exist. Rather than dead-ending, link the existing
+  // account — but only after proving ownership via the password they entered.
+
+  let newUserId: string;
+  let createdNewUser = false;
+  let sessionEstablished = false;
 
   const { data: authData, error: createUserError } =
     await admin.auth.admin.createUser({
@@ -110,24 +117,42 @@ export async function POST(req: NextRequest) {
     });
 
   if (createUserError) {
-    const msg = createUserError.message ?? '';
-    if (
-      msg.toLowerCase().includes('already') ||
-      msg.toLowerCase().includes('exists')
-    ) {
+    const msg = (createUserError.message ?? '').toLowerCase();
+    const alreadyExists =
+      msg.includes('already') || msg.includes('exists') || msg.includes('registered');
+    if (!alreadyExists) {
+      console.error('[vendor/onboard] createUser error:', createUserError);
       return NextResponse.json(
-        { error: 'An account with this email already exists. Please sign in instead.' },
+        { error: 'Could not create account. Please try again.' },
+        { status: 500 },
+      );
+    }
+
+    // Email already has a Pack account. Verify the person owns it by signing
+    // in with the password they provided (this also sets the session cookie).
+    const serverClient = vendorServerClient();
+    const { data: signInData, error: signInError } =
+      await serverClient.auth.signInWithPassword({
+        email: email as string,
+        password: password as string,
+      });
+
+    if (signInError || !signInData.user) {
+      return NextResponse.json(
+        {
+          error:
+            'This email already has a Pack account. Enter that account’s password to continue, or reset it in the app first.',
+        },
         { status: 409 },
       );
     }
-    console.error('[vendor/onboard] createUser error:', createUserError);
-    return NextResponse.json(
-      { error: 'Could not create account. Please try again.' },
-      { status: 500 },
-    );
-  }
 
-  const newUserId = authData.user.id;
+    newUserId = signInData.user.id;
+    sessionEstablished = true;
+  } else {
+    newUserId = authData.user.id;
+    createdNewUser = true;
+  }
 
   // ── Upload logo (if provided) ─────────────────────────────────────────────
 
@@ -183,31 +208,39 @@ export async function POST(req: NextRequest) {
 
   if (rpcError) {
     console.error('[vendor/onboard] accept_vendor_invite error:', rpcError);
-    // Orphan cleanup: delete the auth user we just created.
-    await admin.auth.admin.deleteUser(newUserId);
+    // Orphan cleanup: only delete an auth user WE created. Never delete a
+    // pre-existing app account we merely linked.
+    if (createdNewUser) {
+      await admin.auth.admin.deleteUser(newUserId);
+    }
     return NextResponse.json(
-      { error: 'Registration failed. The invite may have already been used. Please contact hello@trypack.app.' },
+      {
+        error:
+          'Registration could not be completed — this invite may have already been used. If you already finished setup, sign in at /vendor/login. Otherwise contact hello@trypack.app.',
+      },
       { status: 400 },
     );
   }
 
   // ── Sign the user in (set auth cookies) ───────────────────────────────────
-  // Use vendorServerClient (cookie-writing) so the redirect to /vendor is
+  // For a linked existing account we already signed in above. For a freshly
+  // created user, establish the session now so the /vendor redirect is
   // authenticated immediately.
+  if (!sessionEstablished) {
+    const serverClient = vendorServerClient();
+    const { error: signInError } = await serverClient.auth.signInWithPassword({
+      email: email as string,
+      password: password as string,
+    });
 
-  const serverClient = vendorServerClient();
-  const { error: signInError } = await serverClient.auth.signInWithPassword({
-    email: email as string,
-    password: password as string,
-  });
-
-  if (signInError) {
-    // Registration succeeded but sign-in failed — user can sign in manually.
-    console.error('[vendor/onboard] signIn after registration failed:', signInError);
-    return NextResponse.json(
-      { ok: true, redirect: '/vendor/login' },
-      { status: 200 },
-    );
+    if (signInError) {
+      // Registration succeeded but sign-in failed — user can sign in manually.
+      console.error('[vendor/onboard] signIn after registration failed:', signInError);
+      return NextResponse.json(
+        { ok: true, redirect: '/vendor/login' },
+        { status: 200 },
+      );
+    }
   }
 
   return NextResponse.json({ ok: true }, { status: 200 });
