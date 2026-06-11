@@ -14,19 +14,22 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 
-function requiredEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env var: ${name}`);
-  return v;
-}
-
 /**
  * Browser-side Supabase client for vendor auth.
  * Use in 'use client' components only (e.g. the vendor login form).
+ *
+ * IMPORTANT: read the env vars by their LITERAL names. Next.js only inlines
+ * NEXT_PUBLIC_* into the browser bundle for static `process.env.NEXT_PUBLIC_FOO`
+ * references — a dynamic `process.env[name]` is NOT replaced and reads as
+ * undefined in the browser (which surfaced as a "Network error" on login).
  */
 export function vendorBrowserClient() {
-  return createBrowserClient(
-    requiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
-    requiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error(
+      'Supabase browser env missing (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY)',
+    );
+  }
+  return createBrowserClient(url, anonKey);
 }

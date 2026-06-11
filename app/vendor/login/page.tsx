@@ -42,8 +42,8 @@ function VendorLoginForm() {
       // new session before navigating to the vendor dashboard.
       router.push(next);
       router.refresh();
-    } catch {
-      setError('Network error — please try again');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error — please try again');
     } finally {
       setLoading(false);
     }
