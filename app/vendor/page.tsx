@@ -9,13 +9,7 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-const comingSoonCards = [
-  {
-    title: 'Nearby Dogs',
-    description: 'Get notified when Pack walkers are near your location.',
-    icon: '🐾',
-  },
-];
+const comingSoonCards: { title: string; description: string; icon: string }[] = [];
 
 export default async function VendorDashboardPage() {
   const result = await requireActiveVendor();
@@ -136,6 +130,27 @@ export default async function VendorDashboardPage() {
                 </h3>
                 <p className="text-xs text-cocoa mt-1 leading-relaxed">
                   See how many walkers have viewed and redeemed your deals.
+                </p>
+              </div>
+              <span className="text-xs font-semibold text-white bg-tangerine rounded-full px-2.5 py-1 self-start">
+                View &rarr;
+              </span>
+            </a>
+
+            {/* Nearby Dogs — live */}
+            <a
+              href="/vendor/nearby"
+              className="bg-cream border border-sand rounded-2xl p-6 flex flex-col gap-3 hover:shadow-md transition-shadow group"
+            >
+              <span className="text-3xl" role="img" aria-label="Nearby Dogs">
+                🐾
+              </span>
+              <div>
+                <h3 className="font-display font-bold text-espresso text-base group-hover:text-tangerine transition-colors">
+                  Nearby Dogs
+                </h3>
+                <p className="text-xs text-cocoa mt-1 leading-relaxed">
+                  See anonymized stats on Pack dogs active near your location.
                 </p>
               </div>
               <span className="text-xs font-semibold text-white bg-tangerine rounded-full px-2.5 py-1 self-start">
