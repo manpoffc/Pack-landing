@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getVendor } from '@/lib/vendorSession';
 import { supabaseAdmin } from '@/lib/supabase';
-import { geocodeAddress } from '@/lib/geocode';
 
 // redirect() works by throwing a NEXT_REDIRECT error; a catch block must
 // re-throw it or the navigation is lost.
@@ -29,43 +28,9 @@ async function requireVendorForAction() {
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 /**
- * Attempt to auto-geocode the vendor's stored address and persist lat/lng.
- */
-export async function geocodeVendor(): Promise<ActionResult> {
-  try {
-    const vendor = await requireVendorForAction();
-
-    const geo = await geocodeAddress({
-      line1: vendor.address_line1 as string | null,
-      line2: vendor.address_line2 as string | null,
-      city: vendor.city as string | null,
-      state: vendor.state as string | null,
-      postal: vendor.postal_code as string | null,
-      country: vendor.country as string | null,
-    });
-
-    if (!geo) {
-      return { ok: false, error: 'Could not locate address via geocoding.' };
-    }
-
-    const admin = supabaseAdmin();
-    const { error } = await admin
-      .from('vendors')
-      .update({ lat: geo.lat, lng: geo.lng, geocoded_at: new Date().toISOString() })
-      .eq('id', vendor.id);
-
-    if (error) return { ok: false, error: error.message };
-
-    revalidatePath('/vendor/nearby');
-    return { ok: true };
-  } catch (e) {
-    if (isRedirectError(e)) throw e;
-    return { ok: false, error: e instanceof Error ? e.message : 'Unexpected error' };
-  }
-}
-
-/**
  * Manual lat/lng override — validates ranges and persists via service role.
+ * (Auto-geocoding on first load is inlined in the page; this is the fallback
+ * when geocoding the stored address fails.)
  */
 export async function setVendorGeo(formData: FormData): Promise<ActionResult> {
   try {

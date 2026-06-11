@@ -151,8 +151,10 @@ export default async function VendorNearbyPage({
   // but after a geocode attempt we need the updated lat/lng).
   let vendor = result.vendor;
 
-  // Auto-geocode on first load if lat/lng are missing
-  if (vendor.lat == null || vendor.lng == null) {
+  // Auto-geocode ONCE, only if we've never tried (geocoded_at null). Stamping
+  // geocoded_at on both success and failure stops a vendor whose address can't
+  // be resolved from re-hitting Nominatim on every page load (OSM rate policy).
+  if ((vendor.lat == null || vendor.lng == null) && vendor.geocoded_at == null) {
     const geo = await geocodeAddress({
       line1: vendor.address_line1 as string | null,
       line2: vendor.address_line2 as string | null,
@@ -162,21 +164,23 @@ export default async function VendorNearbyPage({
       country: vendor.country as string | null,
     });
 
-    if (geo) {
-      const admin = supabaseAdmin();
-      await admin
-        .from('vendors')
-        .update({ lat: geo.lat, lng: geo.lng, geocoded_at: new Date().toISOString() })
-        .eq('id', vendor.id);
+    const admin = supabaseAdmin();
+    await admin
+      .from('vendors')
+      .update({
+        lat: geo?.lat ?? null,
+        lng: geo?.lng ?? null,
+        geocoded_at: new Date().toISOString(),
+      })
+      .eq('id', vendor.id);
 
-      // Re-read to get the updated row
-      const { data: fresh } = await admin
-        .from('vendors')
-        .select('*')
-        .eq('id', vendor.id)
-        .single();
-      if (fresh) vendor = fresh as typeof vendor;
-    }
+    // Re-read to get the updated row
+    const { data: fresh } = await admin
+      .from('vendors')
+      .select('*')
+      .eq('id', vendor.id)
+      .single();
+    if (fresh) vendor = fresh as typeof vendor;
   }
 
   // Build address string for display
