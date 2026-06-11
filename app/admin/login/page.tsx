@@ -6,7 +6,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') ?? '/admin/events';
+  // Only allow same-origin admin paths — never an absolute or protocol-relative
+  // URL — so ?next= can't be used as a post-login open redirect to a phishing
+  // site. `//evil.com` and `https://evil.com` both fall back to the dashboard.
+  const rawNext = searchParams.get('next') ?? '';
+  const next =
+    rawNext.startsWith('/admin/') && !rawNext.startsWith('//')
+      ? rawNext
+      : '/admin/events';
 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

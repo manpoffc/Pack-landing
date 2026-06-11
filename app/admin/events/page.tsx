@@ -1,7 +1,37 @@
 import type { Metadata } from 'next';
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
+import { verifyToken } from '@/lib/adminAuth';
 import { EventCard } from './EventCard';
+
+// Defense-in-depth: middleware already gates /admin/*, but server actions wield
+// the service-role key, so re-verify the admin cookie inside every action.
+// Auth must not live in exactly one place when the blast radius is this large.
+async function requireAdmin() {
+  const secret = process.env.ADMIN_COOKIE_SECRET;
+  const token = cookies().get('pack_admin')?.value;
+  if (!secret || !token || !(await verifyToken(token, secret))) {
+    throw new Error('Not authorized');
+  }
+}
+
+async function reviewEvent(
+  formData: FormData,
+  status: 'approved' | 'rejected' | 'cancelled',
+) {
+  await requireAdmin();
+  const eventId = formData.get('event_id') as string;
+  const note = (formData.get('note') as string | null) ?? '';
+  const sb = supabaseAdmin();
+  const { error } = await sb.rpc('review_event', {
+    p_event_id: eventId,
+    p_status: status,
+    p_note: note || null,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath('/admin/events');
+}
 
 export const metadata: Metadata = {
   title: 'Event Review — Pack Admin',
@@ -36,44 +66,17 @@ export type EventRow = {
 
 async function approveEvent(formData: FormData) {
   'use server';
-  const eventId = formData.get('event_id') as string;
-  const note = (formData.get('note') as string | null) ?? '';
-  const sb = supabaseAdmin();
-  const { error } = await sb.rpc('review_event', {
-    p_event_id: eventId,
-    p_status: 'approved',
-    p_note: note || null,
-  });
-  if (error) throw new Error(error.message);
-  revalidatePath('/admin/events');
+  await reviewEvent(formData, 'approved');
 }
 
 async function rejectEvent(formData: FormData) {
   'use server';
-  const eventId = formData.get('event_id') as string;
-  const note = (formData.get('note') as string | null) ?? '';
-  const sb = supabaseAdmin();
-  const { error } = await sb.rpc('review_event', {
-    p_event_id: eventId,
-    p_status: 'rejected',
-    p_note: note || null,
-  });
-  if (error) throw new Error(error.message);
-  revalidatePath('/admin/events');
+  await reviewEvent(formData, 'rejected');
 }
 
 async function cancelEvent(formData: FormData) {
   'use server';
-  const eventId = formData.get('event_id') as string;
-  const note = (formData.get('note') as string | null) ?? '';
-  const sb = supabaseAdmin();
-  const { error } = await sb.rpc('review_event', {
-    p_event_id: eventId,
-    p_status: 'cancelled',
-    p_note: note || null,
-  });
-  if (error) throw new Error(error.message);
-  revalidatePath('/admin/events');
+  await reviewEvent(formData, 'cancelled');
 }
 
 // ---------- data fetching ----------
