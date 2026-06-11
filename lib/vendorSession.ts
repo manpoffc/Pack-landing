@@ -15,6 +15,7 @@
  *      2. Avoids an extra round-trip to refresh the JWT before the query.
  */
 
+import { redirect } from 'next/navigation';
 import { vendorServerClient } from '@/lib/supabaseVendor';
 import { supabaseAdmin } from '@/lib/supabase';
 
@@ -72,4 +73,35 @@ export async function getVendor(): Promise<GetVendorResult> {
     vendor: vendor as VendorRow,
     isActive: vendor.status === 'active',
   };
+}
+
+export type RequireActiveVendorResult =
+  | { ok: true; vendor: VendorRow }
+  | { ok: false; reason: 'not_a_vendor' | 'suspended' | 'cancelled' | 'inactive'; status: string };
+
+/**
+ * Use in portal server components. Redirects to /vendor/login if no session.
+ * Returns a discriminated result for non-active states the page can render.
+ */
+export async function requireActiveVendor(): Promise<RequireActiveVendorResult> {
+  const result = await getVendor();
+
+  if (result.kind === 'no_session') {
+    redirect('/vendor/login');
+  }
+
+  if (result.kind === 'not_a_vendor') {
+    return { ok: false, reason: 'not_a_vendor', status: 'not_a_vendor' };
+  }
+
+  const { vendor } = result;
+  if (vendor.status !== 'active') {
+    return {
+      ok: false,
+      reason: vendor.status === 'suspended' ? 'suspended' : 'cancelled',
+      status: vendor.status,
+    };
+  }
+
+  return { ok: true, vendor };
 }
