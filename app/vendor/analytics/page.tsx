@@ -166,7 +166,7 @@ export default async function VendorAnalyticsPage() {
   // Top-level summary metrics
   const totalRedemptions = deals.reduce((sum, d) => sum + (d.redemptions ?? 0), 0);
   const liveDeals = deals.filter((d) => d.active && !d.admin_disabled).length;
-  const totalCreditsSpent = deals.reduce((sum, d) => sum + (Number(d.credits_spent) ?? 0), 0);
+  const totalCreditsSpent = deals.reduce((sum, d) => sum + (Number(d.credits_spent) || 0), 0);
 
   return (
     <main className="bg-parchment min-h-screen">
@@ -183,7 +183,7 @@ export default async function VendorAnalyticsPage() {
         <h1 className="font-display text-3xl font-bold text-espresso mb-8">Analytics</h1>
 
         {/* Top summary cards */}
-        <section className="grid grid-cols-3 gap-4 mb-10">
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
           {/* Total redemptions — lead metric */}
           <div className="bg-cream border border-sand rounded-2xl p-5 flex flex-col gap-1">
             <p className="text-xs text-cocoa font-medium uppercase tracking-wide">
