@@ -7,7 +7,6 @@ type Props = {
   token: string;
   prefillEmail: string;
   prefillBusinessName: string;
-  vendorId: string;
 };
 
 function inputClass(extra?: string) {
@@ -22,7 +21,6 @@ export default function OnboardForm({
   token,
   prefillEmail,
   prefillBusinessName,
-  vendorId,
 }: Props) {
   const router = useRouter();
 
@@ -100,7 +98,6 @@ export default function OnboardForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token,
-          vendorId,
           email: prefillEmail,
           password,
           business_name: businessName.trim(),

@@ -8,9 +8,12 @@
  *     cookies). No session → redirect to /vendor/login.  This is fast and
  *     works on the edge without hitting the database.
  *
- *   /vendor layout (app/vendor/layout.tsx):
- *     Calls getVendor() which uses the service-role client to fetch the
- *     `vendors` row and check status (active / suspended / cancelled).
+ *   Each authenticated /vendor page (e.g. app/vendor/page.tsx):
+ *     Calls requireActiveVendor() (lib/vendorSession) which uses the
+ *     service-role client to fetch the `vendors` row and check status
+ *     (active / suspended / cancelled). NOTE: there is no app/vendor/layout.tsx
+ *     enforcing this — every new /vendor/* page MUST call requireActiveVendor()
+ *     itself, or add a route-group layout that does.
  *     This separation keeps the middleware thin (no service-role DB calls on
  *     the edge) while still guarding every /vendor/* request against
  *     unauthenticated access.

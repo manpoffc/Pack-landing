@@ -56,7 +56,6 @@ export default async function VendorOnboardPage({ searchParams }: PageProps) {
           token={token}
           prefillEmail={invite.email}
           prefillBusinessName={invite.business_name ?? ''}
-          vendorId={invite.vendor_id}
         />
       </div>
     </main>

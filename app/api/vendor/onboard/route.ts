@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
 
   const {
     token,
-    vendorId,
     email,
     password,
     business_name,
@@ -46,7 +45,6 @@ export async function POST(req: NextRequest) {
     contact_phone,
   } = body as {
     token?: string;
-    vendorId?: string;
     email?: string;
     password?: string;
     business_name?: string;
@@ -97,7 +95,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'This invite link has expired.' }, { status: 400 });
   }
 
-  const resolvedVendorId = (vendorId ?? invite.vendor_id) as string;
+  // Always derive the vendor id from the token's invite row, never from the
+  // request body — otherwise a holder of any valid token could write a logo
+  // under another vendor's storage prefix.
+  const resolvedVendorId = invite.vendor_id as string;
 
   // ── Create auth user ──────────────────────────────────────────────────────
 
@@ -132,7 +133,9 @@ export async function POST(req: NextRequest) {
 
   let logoUrl: string | null = null;
 
-  if (logo_base64 && typeof logo_base64 === 'string') {
+  // Cap the logo at ~2MB of base64 (~1.5MB decoded) to avoid OOM / bucket bloat.
+  const LOGO_MAX_BASE64 = 2_800_000;
+  if (logo_base64 && typeof logo_base64 === 'string' && logo_base64.length <= LOGO_MAX_BASE64) {
     const parsed = parseDataUrl(logo_base64);
     if (parsed) {
       const { buffer, mimeType, ext } = parsed;
