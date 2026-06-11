@@ -2,6 +2,7 @@
 
 import { useState, useRef, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { US_STATES, toStateName } from '@/lib/usStates';
 
 type Props = {
   token: string;
@@ -48,7 +49,28 @@ export default function OnboardForm({
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [postalCode, setPostalCode] = useState('');
-  const [country, setCountry] = useState('US');
+  // Country is fixed to the US for this rollout.
+  const country = 'US';
+  // City options for the selected state (datalist dropdown).
+  const [cityOptions, setCityOptions] = useState<string[]>([]);
+
+  async function loadCities(stateName: string) {
+    setCityOptions([]);
+    if (!stateName) return;
+    try {
+      const res = await fetch(`/api/geo/cities?state=${encodeURIComponent(stateName)}`);
+      const json = (await res.json()) as { cities?: string[] };
+      setCityOptions(json.cities ?? []);
+    } catch {
+      setCityOptions([]);
+    }
+  }
+
+  function onStateChange(name: string) {
+    setState(name);
+    setCity('');
+    void loadCities(name);
+  }
 
   // Address autocomplete (Photon, via /api/geo/autocomplete). Capturing
   // lat/lng on select means the vendor is geocoded at onboarding.
@@ -92,10 +114,15 @@ export default function OnboardForm({
 
   function pickSuggestion(s: AddressSuggestion) {
     setLine1(s.line1);
+    if (s.state) {
+      const stateName = toStateName(s.state);
+      setState(stateName);
+      void loadCities(stateName);
+    }
+    // Set city after kicking off the city load; the datalist allows free text
+    // so the picked city shows even if the list hasn't arrived yet.
     if (s.city) setCity(s.city);
-    if (s.state) setState(s.state);
     if (s.postal) setPostalCode(s.postal);
-    if (s.country) setCountry(s.country);
     setLat(s.lat);
     setLng(s.lng);
     setSuggestions([]);
@@ -133,6 +160,7 @@ export default function OnboardForm({
     passwordsMatch &&
     businessName.trim().length > 0 &&
     line1.trim().length > 0 &&
+    state.trim().length > 0 &&
     city.trim().length > 0 &&
     !loading;
 
@@ -327,61 +355,73 @@ export default function OnboardForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="city" className={labelClass()}>
-                City <span className="text-brick">*</span>
+              <label htmlFor="state" className={labelClass()}>
+                State <span className="text-brick">*</span>
               </label>
-              <input
-                id="city"
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+              <select
+                id="state"
+                value={state}
+                onChange={(e) => onStateChange(e.target.value)}
                 required
                 className={inputClass()}
-                placeholder="New York"
-              />
+              >
+                <option value="">Select a state…</option>
+                {US_STATES.map((s) => (
+                  <option key={s.code} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div>
-              <label htmlFor="state" className={labelClass()}>
-                State / Province
-              </label>
-              <input
-                id="state"
-                type="text"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                className={inputClass()}
-                placeholder="NY"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="postal-code" className={labelClass()}>
-                Postal code
+                ZIP code
               </label>
               <input
                 id="postal-code"
                 type="text"
+                inputMode="numeric"
                 value={postalCode}
                 onChange={(e) => setPostalCode(e.target.value)}
                 className={inputClass()}
                 placeholder="10001"
               />
             </div>
-            <div>
-              <label htmlFor="country" className={labelClass()}>
-                Country
-              </label>
-              <input
-                id="country"
-                type="text"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className={inputClass()}
-                placeholder="US"
-              />
-            </div>
+          </div>
+
+          <div>
+            <label htmlFor="city" className={labelClass()}>
+              City <span className="text-brick">*</span>
+            </label>
+            <input
+              id="city"
+              type="text"
+              list="city-options"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              required
+              disabled={!state}
+              className={inputClass(!state ? 'opacity-60' : '')}
+              placeholder={state ? 'Start typing or pick your city' : 'Select a state first'}
+            />
+            <datalist id="city-options">
+              {cityOptions.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </div>
+
+          <div>
+            <label htmlFor="country" className={labelClass()}>
+              Country
+            </label>
+            <input
+              id="country"
+              type="text"
+              value="United States"
+              disabled
+              className={inputClass('opacity-70 cursor-not-allowed')}
+            />
           </div>
 
           <div>
