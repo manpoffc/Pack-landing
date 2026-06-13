@@ -92,6 +92,10 @@ export default async function AdminDealsPage() {
             Vendor Management
           </a>
           <span className="text-sand">/</span>
+          <a href="/admin/vendor-requests" className="text-cocoa hover:text-espresso underline">
+            Vendor Requests
+          </a>
+          <span className="text-sand">/</span>
           <span className="text-espresso font-semibold">Deal Moderation</span>
         </nav>
 

@@ -98,6 +98,10 @@ export default async function AdminVendorsPage() {
           <span className="text-sand">/</span>
           <span className="text-espresso font-semibold">Vendor Management</span>
           <span className="text-sand">/</span>
+          <a href="/admin/vendor-requests" className="text-cocoa hover:text-espresso underline">
+            Vendor Requests
+          </a>
+          <span className="text-sand">/</span>
           <a href="/admin/deals" className="text-cocoa hover:text-espresso underline">
             Deal Moderation
           </a>
