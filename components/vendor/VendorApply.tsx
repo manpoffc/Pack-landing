@@ -2,28 +2,13 @@
 
 import { motion } from 'framer-motion';
 import { fadeUp, staggerParent } from '@/lib/motion';
+import { VendorRequestForm } from './VendorRequestForm';
 
 // Closing CTA. Vendor sign-up is invite-based (admin issues invites in M39),
-// so there's no public self-serve form here — the action is a pre-filled
-// mailto to start the conversation. A privacy reassurance band sits above it
-// because audience data is the part vendors (rightly) ask about first.
-
-const MAILTO =
-  'mailto:hello@trypack.app' +
-  '?subject=' +
-  encodeURIComponent('Pack vendor invite request') +
-  '&body=' +
-  encodeURIComponent(
-    [
-      'Business name:',
-      'City / neighborhood:',
-      'Website (if any):',
-      'What you sell:',
-      'What you’d like to offer dog parents:',
-      '',
-      '— Sent from trypack.app/vendors',
-    ].join('\n'),
-  );
+// so this captures the request via a form that emails the team + records it;
+// an admin then issues the real invite from /admin/vendors. A privacy
+// reassurance band sits above because audience data is the part vendors
+// (rightly) ask about first.
 
 export function VendorApply() {
   return (
@@ -65,26 +50,17 @@ export function VendorApply() {
           join, live the same day, cancel anytime.
         </motion.p>
 
-        <motion.div
-          className="flex flex-col sm:flex-row gap-3 justify-center"
-          variants={fadeUp}
-        >
-          <a
-            href={MAILTO}
-            className="bg-tangerine text-white font-semibold rounded-full px-7 py-3.5 hover:opacity-90 transition-opacity text-center"
-          >
-            Request a vendor invite
-          </a>
-          <a
-            href="https://trypack.app/vendor/login"
-            className="border border-parchment/30 text-parchment font-semibold rounded-full px-7 py-3.5 hover:border-parchment transition-colors text-center"
-          >
-            Already a vendor? Log in
-          </a>
+        <motion.div variants={fadeUp}>
+          <VendorRequestForm />
         </motion.div>
 
-        <motion.p className="text-center text-sm opacity-60 mt-6" variants={fadeUp}>
-          Or email us directly at{' '}
+        <motion.p className="text-center text-sm opacity-60 mt-8" variants={fadeUp}>
+          Already a vendor?{' '}
+          <a href="https://trypack.app/vendor/login" className="underline">
+            Log in
+          </a>
+          {'  ·  '}
+          Prefer email?{' '}
           <a href="mailto:hello@trypack.app" className="underline">
             hello@trypack.app
           </a>
