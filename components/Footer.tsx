@@ -1,7 +1,7 @@
 export function Footer() {
   return (
     <footer className="bg-espresso text-parchment">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-12 grid gap-8 sm:grid-cols-3">
+      <div className="max-w-5xl mx-auto px-6 py-12 grid gap-8 sm:grid-cols-3">
         <div>
           <p className="font-display text-2xl font-bold">Pack</p>
           <p className="text-sm opacity-70 mt-2">Walks worth showing up for.</p>
@@ -18,6 +18,11 @@ export function Footer() {
         <div className="text-sm opacity-70">
           <p className="font-semibold text-parchment mb-2">Get in touch</p>
           <p>hello@trypack.app</p>
+          <p className="mt-2">
+            <a href="/vendors" className="hover:opacity-100 underline">
+              Pack for business →
+            </a>
+          </p>
         </div>
       </div>
       <div className="border-t border-parchment/10 py-4 text-center text-xs opacity-60">
